@@ -15,6 +15,7 @@ def generaImmagini(numero_immagini: int) -> List[Image.Image]:
     """
     image_array = []
 
+    # uso la funziione random per stampare i numeri in posiziioni diverse nella schermata 28*28
     for _ in range(numero_immagini):
         number = np.random.randint(0, 10)
         height = np.random.randint(4, 10)
@@ -37,7 +38,7 @@ def generaImmagini(numero_immagini: int) -> List[Image.Image]:
     return image_array
 
 
-def generaImmaginiMnist(numero_immagini: int) -> List[torch.Tensor]:
+def generaImmaginiMnist(numero_immagini: int) -> List[Image.Image]:
     """
     Genera un elenco di immagini casuali prese dal dataset MNIST.
 
@@ -45,7 +46,7 @@ def generaImmaginiMnist(numero_immagini: int) -> List[torch.Tensor]:
         numero_immagini (int): Il numero di immagini da generare.
 
     Returns:
-        List[torch.Tensor]: Una lista di tensori contenenti le immagini MNIST.
+        List[Image.Image]]: Una lista di tensori contenenti le immagini MNIST.
     """
     image_array = []
 

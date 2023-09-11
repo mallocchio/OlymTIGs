@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from typing import List, Tuple
 
-def crea_grafico(tensors: List[torch.Tensor], prediction: List[Tuple[np.ndarray, torch.Tensor, int]]) -> None:
+def crea_grafico(tensors, prediction):
     """
     Crea un grafico per ciascuna immagine e la relativa predizione.
 
