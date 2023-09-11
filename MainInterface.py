@@ -5,11 +5,16 @@ import ClassifierPredictionInterface
 from enums import Type
 
 # definisco il numero di immagini da generare
+def main():
+    numero_immagini = 10
 
-images = ImageGeneratorInterface.generaImmagini(10, Type.CREATED)
+    images = ImageGeneratorInterface.generaImmagini(numero_immagini, Type.CREATED)
 
-tensors = ImageToTensorConverterInterface.imageTensorConvert(images)
+    tensors = ImageToTensorConverterInterface.imageTensorConvert(images)
 
-predictions = ClassifierPredictionInterface.prediction(tensors)
+    predictions = ClassifierPredictionInterface.prediction(tensors)
 
-GraphGeneratorInterface.generateGraph(tensors, predictions)
+    GraphGeneratorInterface.generateGraph(tensors, predictions)
+
+if __name__ == "__main__":
+    main()

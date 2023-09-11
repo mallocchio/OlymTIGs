@@ -1,8 +1,9 @@
+import ImageGenerator
+from PIL import Image
 from typing import List
-from ImageGenerator import ImageGenerator
 from enums import Type
 
-def generaImmagini(num_images: int, type: Type) -> List[str]:
+def generaImmagini(num_images, type) -> List[Image.Image]:
     """
     Genera un elenco di immagini in base al tipo specificato.
 
@@ -11,7 +12,7 @@ def generaImmagini(num_images: int, type: Type) -> List[str]:
         type (Type): Il tipo di generazione delle immagini, che può essere Type.MNIST o Type.CREATED.
 
     Returns:
-        List[str]: Una lista di nomi di file delle immagini generate.
+        List[Image.Image]: Una lista di immagini generate o prelevate dal dataset MNIST.
 
     Raises:
         ValueError: Se il tipo specificato non è valido.

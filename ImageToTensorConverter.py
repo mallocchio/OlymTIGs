@@ -10,7 +10,7 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
-def imagesToTensor(images: List[Image.Image]) -> List[torch.Tensor]:
+def imagesToTensor(images) -> List[torch.Tensor]:
     """
     Converte una lista di immagini PIL in una lista di tensori PyTorch.
 

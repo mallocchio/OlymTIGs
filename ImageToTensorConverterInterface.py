@@ -2,7 +2,7 @@ from typing import List
 import torch
 from ImageToTensorConverter import imagesToTensor
 
-def imageTensorConvert(images: List) -> List[torch.Tensor]:
+def imageTensorConvert(images) -> List[torch.Tensor]:
     """
     Converte una lista di immagini PIL in una lista di tensori PyTorch.
 
