@@ -1,0 +1,4 @@
+model_path: ./model.h5
+num_images: 10
+image_generator: GENERATED
+model: Tensorflow
