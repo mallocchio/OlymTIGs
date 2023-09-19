@@ -50,9 +50,10 @@ Formato dei Dati: Per il classificatore TensorFlow, le immagini devono essere in
                   essere in formato Tensor con le dimensioni (1, 784), dove 784 rappresenta il vettore piatto delle immagini 28x28.
 
 Tipo di Immagine: Le immagini possono essere di due tipi:
-                  MNIST: Le immagini possono essere campioni del dataset MNIST, che sono cifre scritte a mano in scala di grigi.
 
-                  CREATE: Le immagini possono essere generate artificialmente utilizzando un generatore 
-                          di immagini (ImageGenerator). Queste immagini contengono cifre disegnate casualmente su uno sfondo nero.
+    MNIST: Le immagini possono essere campioni del dataset MNIST, che sono cifre scritte a mano in scala di grigi.
+
+    CREATE: Le immagini possono essere generate artificialmente utilizzando un generatore 
+            di immagini (ImageGenerator). Queste immagini contengono cifre disegnate casualmente su uno sfondo nero.
 
 
