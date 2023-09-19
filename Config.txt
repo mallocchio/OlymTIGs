@@ -1,4 +1,4 @@
 model_path: ./model.h5
 num_images: 10
-image_generator: GENERATED
+images_type: MNIST
 model: Tensorflow

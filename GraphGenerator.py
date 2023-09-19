@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
 class VisualizzatoreGrafico:
 
-    def __init__(self, prediction):
+    def __init__(self, image, prediction):
+        self.image = image
         self.prediction = prediction
 
     def visualizza_grafico(self):
@@ -15,14 +15,14 @@ class VisualizzatoreGrafico:
 
         fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3, figsize=(15, 8))
 
-        ps = self.prediction[1].squeeze()
-        logit = self.prediction[2].data.numpy().squeeze()
+        ps = self.prediction[0]
+        logit = self.prediction[1]
 
         max_ps = round(max(ps), 3)
         max_logit = round(max(logit), 3)
-        predicted_digit = self.prediction[3]
+        predicted_digit = self.prediction[2]
 
-        ax0.imshow(self.prediction[0].squeeze().numpy(), cmap='gray')
+        ax0.imshow(self.image, cmap='gray')
         ax0.axis('off')
         ax0.set_title(f'Il numero predetto è: {predicted_digit}')
 

@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-import torch
-from torchvision import transforms, datasets
+import torchvision.datasets as datasets
 
 
 class ImageGeneratorAbstract(ABC):
