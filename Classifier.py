@@ -13,7 +13,6 @@ from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 
 class Classifier(ABC):
-
     @abstractmethod
     def __init__(self):
         pass
@@ -80,18 +79,15 @@ class TensorflowClassifier(Classifier):
     def save_model(self, model_path):
         self.model.save(model_path)
 
+    # -----------------------------------------------
+
     def load_model(self, model_path):
         self.trained_model = tf.keras.models.load_model(model_path)
 
-    #preprocess_image deve essere rifatta
     def preprocess_image(self, image):
         tensor = image.resize((28, 28))
-        # Converte l'immagine in scala di grigi
-        tensor = image.convert('L')
-        # Normalizza l'immagine per avere valori nell'intervallo [0, 1]
-        tensor = np.array(image) / 255.0
-        # Aggiungi una dimensione per rappresentare il batch
-        tensor = np.expand_dims(image, axis=0)
+        tensor = np.array(tensor) / 255.0
+        tensor = np.expand_dims(tensor, axis=0)
         return tensor
 
     def get_prediction(self, image):
@@ -164,14 +160,16 @@ class TorchClassifier(Classifier):
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
 
+    # ---------------------------------------------
+
     def load_model(self, model_path):
         self.trained_model = torch.load(model_path)
 
     def preprocess_image(self, image):
         transform = transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,))
-                    ])
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
         tensor = transform(image)
         tensor = tensor.view(1, 784)
         return tensor
@@ -191,43 +189,7 @@ class TorchClassifier(Classifier):
         logps = logps.data.numpy().squeeze()
         return ps, logps, predicted_digit
 
-
 if __name__ == "__main__":
-
-    transform = transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,))
-                    ])
-
-    # TensorFlow
-    train_ds, test_ds = tfds.load(
-        'mnist',
-        split=['train', 'test'],
-        as_supervised=True,
-        batch_size=8,
-    )
-
-    classifier = TensorflowClassifier()
-    classifier.build_model()
-    classifier.model.summary()
-
-    report = classifier.train(train_ds, epochs=5)
-    classifier.evaluate(test_ds)
-    model_path = 'mnist_classifier_model.h5'
-    classifier.save_model(model_path)
-
-    # PyTorch
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,)), ])
-
-    trainset = datasets.MNIST('TRAINSET', download=True, train=True, transform=transform)
-    valset = datasets.MNIST('TESTSET', download=True, train=False, transform=transform)
-
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
-    valloader = torch.utils.data.DataLoader(valset, batch_size=64, shuffle=True)
-
-    classifier = TorchClassifier()
-    classifier.train(trainloader)
-    
-    accuracy = classifier.evaluate(valloader)
-    print("Model Accuracy =", accuracy)
-    classifier.save_model('./model.pt')
+    # Codice di esempio per l'addestramento e l'uso dei classificatori Tensorflow e PyTorch
+    # ...
+    pass

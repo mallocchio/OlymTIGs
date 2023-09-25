@@ -1,4 +1,4 @@
-model_path: ./model.h5
+model_path: ./Models/model.pt
 num_images: 10
 images_type: MNIST
-model: Tensorflow
+model: Torch

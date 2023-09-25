@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from tensorflow.python.ops.numpy_ops import np_config
-np_config.enable_numpy_behavior()
+import time
+
 
 class VisualizzatoreGrafico:
 
@@ -9,7 +9,7 @@ class VisualizzatoreGrafico:
         self.image = image
         self.prediction = prediction
 
-    def visualizza_grafico(self):
+    def crea_grafico(self):
         plt.style.use("ggplot")
         height = 0.2
 
@@ -40,5 +40,9 @@ class VisualizzatoreGrafico:
         ax2.set_title("Grafico delle predizioni")
         ax2.set_xlabel(f'Sicurezza della predizione: {max_ps*100:.3f}%')
 
-        plt.tight_layout()
-        plt.show()
+        timestamp = int(time.time())
+        graph_filename = f'predizione_{timestamp}.png'
+        plt.savefig(graph_filename)
+
+        #plt.tight_layout()
+        #plt.show()
