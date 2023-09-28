@@ -1,4 +1,3 @@
-model_path: ./Models/model.pt
+model_path: ./Models/model.h5
 num_images: 10
 images_type: MNIST
-model: Torch

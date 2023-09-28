@@ -80,14 +80,16 @@ class MNISTGenerator(ImageGeneratorAbstract):
         return self.image, self.label
 
     def apply_filters(self, image):
-        filtered_image = cv2.GaussianBlur(image, (5, 5), 0)
-        filtered_image = cv2.Canny(image, 100, 200)
+        self.image = np.array(image)
+        filtered_image = cv2.GaussianBlur(self.image, (5, 5), 0)
+        filtered_image = cv2.Canny(self.image, 100, 200)
+        filtered_image = Image.fromarray(filtered_image)
         return filtered_image
 
     def add_noise(self, image, noise_factor=0.5):
-        self.image = np.array(self.image)
+        self.image = np.array(image)
         noise = np.random.randn(*self.image.shape) * noise_factor
-        noisy_image = self.image + noise
+        noisy_image = image + noise
         noisy_image = np.clip(noisy_image, 0, 255)
         noisy_image = Image.fromarray(noisy_image)
         return noisy_image

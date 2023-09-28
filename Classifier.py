@@ -69,12 +69,20 @@ class TensorflowClassifier(Classifier):
         model.compile(loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         return model
 
-    def train(self, train_ds, epochs=5):
-        report = self.model.fit(train_ds, epochs=epochs)
+    def load_sets():
+        self.train_ds, self.test_ds = tfds.load(
+            'mnist',
+            split=['train', 'test'],
+            as_supervised=True,
+            batch_size=8, #immagini alla volta che vengono passati
+            )
+
+    def train(self, epochs=5):
+        report = self.model.fit(self.train_ds, epochs=epochs)
         return report
 
     def evaluate(self, test_ds):
-        return self.model.evaluate(test_ds)
+        return self.model.evaluate(self.test_ds)
 
     def save_model(self, model_path):
         self.model.save(model_path)
@@ -86,7 +94,6 @@ class TensorflowClassifier(Classifier):
 
     def preprocess_image(self, image):
         tensor = image.resize((28, 28))
-        tensor = np.array(tensor) / 255.0
         tensor = np.expand_dims(tensor, axis=0)
         return tensor
 
@@ -115,6 +122,10 @@ class TorchClassifier(Classifier):
         self.criterion = nn.NLLLoss()
         self.optimizer = optim.SGD(self.model.parameters(), lr=0.003, momentum=0.9)
         self.trained_model = None
+        self.transform = transforms.Compose([
+                            transforms.ToTensor(),
+                            transforms.Normalize((0.5,), (0.5,))
+                        ])
 
     def build_model(self):
         model = nn.Sequential(
@@ -127,10 +138,16 @@ class TorchClassifier(Classifier):
         )
         return model
 
-    def train(self, trainloader, epochs=15):
+    def load_sets(self):
+        self.trainset = datasets.MNIST('PATH_TO_STORE_TRAINSET', download=True, train=True, transform=self.transform)
+        self.valset = datasets.MNIST('PATH_TO_STORE_TESTSET', download=True, train=False, transform=self.transform)
+        self.trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
+        self.valloader = torch.utils.data.DataLoader(valset, batch_size=64, shuffle=True)
+
+    def train(self, epochs=15):
         for e in range(epochs):
             running_loss = 0
-            for images, labels in trainloader:
+            for images, labels in self.trainloader:
                 images = images.view(images.shape[0], -1)
                 self.optimizer.zero_grad()
                 output = self.model(images)
@@ -138,11 +155,11 @@ class TorchClassifier(Classifier):
                 loss.backward()
                 self.optimizer.step()
                 running_loss += loss.item()
-            print("Epoch {} - Training loss: {}".format(e, running_loss / len(trainloader)))
+            print("Epoch {} - Training loss: {}".format(e, running_loss / len(self.trainloader)))
 
-    def evaluate(self, valloader):
+    def evaluate(self):
         correct_count, all_count = 0, 0
-        for images, labels in valloader:
+        for images, labels in self.valloader:
             for i in range(len(labels)):
                 img = images[i].view(1, 784)
                 with torch.no_grad():
@@ -166,11 +183,7 @@ class TorchClassifier(Classifier):
         self.trained_model = torch.load(model_path)
 
     def preprocess_image(self, image):
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
-        ])
-        tensor = transform(image)
+        tensor = self.transform(image)
         tensor = tensor.view(1, 784)
         return tensor
 
