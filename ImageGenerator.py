@@ -46,8 +46,7 @@ class ImageGenerator(ImageGeneratorAbstract):
         draw.text((self.number_height, self.number_length), str(self.number), fill='white', font=font)
 
         self.image = np.array(self.image)
-        self.noisy_image = self.add_noise(self.filtered_image)
-        self.image = Image.fromarray(self.noisy_image)
+        self.noisy_image = self.add_noise(self.image)
 
         return self.image, self.number
 
@@ -68,7 +67,6 @@ class MNISTGenerator(ImageGeneratorAbstract):
         super().__init__()
         self.valset = datasets.MNIST('TESTSET', download=True, train=False, transform=None)
         self.index = None
-        self.image = None
         self.label = None
 
     def set_index(self):
@@ -77,24 +75,19 @@ class MNISTGenerator(ImageGeneratorAbstract):
     def create_image(self):
         self.set_index()
         self.image, self.label = self.valset[self.index]
+        self.image = np.array(self.image)
         return self.image, self.label
 
     def apply_filters(self, image):
-        self.image = np.array(image)
-        filtered_image = cv2.GaussianBlur(self.image, (5, 5), 0)
-        filtered_image = cv2.Canny(self.image, 100, 200)
-        filtered_image = Image.fromarray(filtered_image)
+        filtered_image = cv2.GaussianBlur(image, (5, 5), 0)
+        filtered_image = cv2.Canny(image, 100, 200)
         return filtered_image
 
     def add_noise(self, image, noise_factor=0.5):
-        self.image = np.array(image)
-        noise = np.random.randn(*self.image.shape) * noise_factor
+        noise = np.random.randn(*image.shape) * noise_factor
         noisy_image = image + noise
         noisy_image = np.clip(noisy_image, 0, 255)
-        noisy_image = Image.fromarray(noisy_image)
         return noisy_image
-
-    
 
 if __name__ == "__main__":
     generator = MNISTGenerator()
