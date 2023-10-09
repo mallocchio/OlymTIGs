@@ -12,53 +12,19 @@ from torch.utils.data import Subset
 from torchvision import transforms
 from tqdm import trange
 
-from model import VAE
-from Converter import ModelConverter
-from Classifier import TorchClassifier, TensorflowClassifier
-
 
 class GeneticAlgorithm:
-    def __init__(self, label, device, vae_model_path, classifier_model_path):
+    def __init__(self, label, device, vae, classifier, imgs_to_sample):
         self.label = label
+        self.vae = vae
+        self.classifier = classifier
+        self.imgs_to_sample = imgs_to_sample
         self.device = device
-        self.vae_model_path = vae_model_path
-        self.classifier_model_path = classifier_model_path
         self.img_size = 28 * 28 * 1
-        self.h_size = 1600
-        self.z_size = 400
         self.gen_num = 500
         self.pop_size = 50
         self.best_left = 20
         self.mut_size = 0.1
-        self.imgs_to_samp = 100
-
-    def load_models(self):
-        self.vae = VAE(img_size=28 * 28, h_dim=self.h_size, z_dim=self.z_size)
-        self.vae.load_state_dict(torch.load(self.vae_model_path, map_location=self.device))
-        self.vae.to(self.device)
-
-        if self.classifier_model_path.endswith('.h5'):
-            print('Converting tensorflow classifier to torch...\n')
-            percorso_originale = self.classifier_model_path
-            nuovo_nome_file = "converted_model.pt"
-            directory = os.path.dirname(percorso_originale)
-            nuovo_percorso = os.path.join(directory, nuovo_nome_file)
-
-            converter = ModelConverter(self.classifier_model_path, nuovo_percorso)
-            tensorflow_classifier = converter.load_tensorflow_model()
-            torch_classifier = converter.convert_to_pytorch(tensorflow_classifier)
-            converter.save_pytorch_model(torch_classifier)
-            self.classifier_model_path = nuovo_percorso
-            print('Conversion ended successfully...\n')
-            self.classifier = TorchClassifier()
-            print('Classifier initialized...\n')
-
-        elif self.classifier_model_path.endswith('.pt'):
-            self.classifier = TorchClassifier()
-            print('Classifier initialized...\n')
-
-        self.classifier.load_model(self.classifier_model_path)
-        print('Model loaded...\n')
 
     def prepare_data_loader(self):
         test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(),
@@ -76,7 +42,7 @@ class GeneticAlgorithm:
     def run_genetic_algorithm(self):
         all_img_lst = []
 
-        for img_idx in trange(self.imgs_to_samp):
+        for img_idx in trange(self.imgs_to_sample):
             for i, (x, x_class) in enumerate(self.test_data_loader):
                 samp_img = x[0:1]
                 samp_class = x_class[0].item()
@@ -128,18 +94,12 @@ class GeneticAlgorithm:
             final_bound_img = final_bound_img.detach().cpu().numpy()
             all_img_lst.append(final_bound_img)
 
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        run_folder = f'run_{timestamp}'
-        os.makedirs(run_folder)
-
         all_imgs = np.vstack(all_img_lst)
-        np.save(os.path.join(run_folder, f'bound_imgs_MNIST_{self.label}.npy'), all_imgs)
-        print("Generated inputs:", len(all_img_lst))
-        print("FINISH")
 
-        results_folder = "Bound_images_results"
-        os.makedirs(results_folder, exist_ok=True)
-        shutil.move(run_folder, os.path.join(results_folder, run_folder))
+        return all_imgs
+
+    def save_results(self, all_imgs, run_folder):
+        np.save(os.path.join(run_folder, f'bound_imgs_MNIST_{self.label}.npy'), all_imgs)
 
 
 if __name__ == "__main__":

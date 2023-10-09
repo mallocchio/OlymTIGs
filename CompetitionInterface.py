@@ -7,6 +7,8 @@ from Classifier import TensorflowClassifier, TorchClassifier
 from GraphGenerator import VisualizzatoreGrafico
 from ImageGenerator import ImageGenerator, MNISTGenerator
 from Gen_bound_imgs import GeneticAlgorithm
+from model import VAE
+from Converter import ModelConverter
 import torch
 
 class CompetitionInterface:
@@ -31,8 +33,8 @@ class CompetitionInterface:
                 self.model_path = value
                 self.classifier = TensorflowClassifier() if value.endswith('.h5') else TorchClassifier()
                 print(f'\n{self.classifier.__class__.__name__} classifier initialized...\n')
-            elif key == 'num_images':
-                self.num_images = int(value)
+            elif key == 'imgs_to_sample':
+                self.imgs_to_sample = int(value)
             elif key == 'images_type':
                 if value == 'MNIST':
                     self.image_generator = MNISTGenerator()
@@ -41,7 +43,7 @@ class CompetitionInterface:
                 else:
                     raise ValueError(f"Error in choosing image generator: {value}")
 
-    def run(self):
+    def run_classifier_tester(self):
         self.classifier.load_model(self.model_path)
         print('Model loaded...\n')
         correct_count = 0
@@ -53,7 +55,7 @@ class CompetitionInterface:
 
         print('Start evaluating...\n')
 
-        for i in range(self.num_images):
+        for i in range(self.imgs_to_sample):
             image = self.image_generator.create_image()
             print(f"Processing image {i + 1}")
             
@@ -86,17 +88,18 @@ class CompetitionInterface:
 
         print('Evaluation ended...\n')
 
-        accuracy = correct_count / self.num_images
-        accuracy_with_noise = correct_count_with_noise / self.num_images
+        accuracy = correct_count / self.imgs_to_sample
+        accuracy_with_noise = correct_count_with_noise / self.imgs_to_sample
 
         summary_file = os.path.join(output_folder, "summary.txt")
+
         with open(summary_file, 'w') as f:
             now = datetime.now()
             formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"{formatted_date_time}\n")
             f.write(f"Classifier used: {self.classifier.__class__.__name__}\n")
             f.write(f"Images used: {self.image_generator.__class__.__name__}\n")
-            f.write(f"Images evaluated: {self.num_images}\n")
+            f.write(f"Images evaluated: {self.imgs_to_sample}\n")
             f.write(f"Accuracy of predictions without noise: {accuracy:.2%}\n")
             f.write(f"Accuracy of predictions with noise: {accuracy_with_noise:.2%}\n")
 
@@ -108,19 +111,59 @@ class CompetitionInterface:
         os.makedirs(results_folder, exist_ok=True)
         shutil.move(output_folder, os.path.join(results_folder, output_folder))
 
-    def run2(self):
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    def run_bound_images_generator(self):
 
-        ga = GeneticAlgorithm(self.label, device, self.vae_model_path, self.model_path)
-        ga.load_models()
+        def load_models(self):
+
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            self.vae = VAE(img_size=28 * 28, h_dim=1600, z_dim=400)
+            self.vae.load_state_dict(torch.load(self.vae_model_path, map_location=self.device))
+            self.vae.to(self.device)
+
+            if self.model_path.endswith('.h5'):
+                print('Converting tensorflow classifier to torch...\n')
+                percorso_originale = self.model_path
+                nuovo_nome_file = "converted_model.pt"
+                directory = os.path.dirname(percorso_originale)
+                nuovo_percorso = os.path.join(directory, nuovo_nome_file)
+
+                converter = ModelConverter(self.model_path, nuovo_percorso)
+                tensorflow_classifier = converter.load_tensorflow_model()
+                torch_classifier = converter.convert_to_pytorch(tensorflow_classifier)
+                converter.save_pytorch_model(torch_classifier)
+                self.classifier_model_path = nuovo_percorso
+                print('Conversion ended successfully...\n')
+                self.classifier = TorchClassifier()
+                print('Classifier initialized...\n')
+
+            elif self.model_path.endswith('.pt'):
+                self.classifier = TorchClassifier()
+                print('Classifier initialized...\n')
+
+            self.classifier.load_model(self.model_path)
+            print('Model loaded...\n')
+
+        #carico i modelli
+        load_models(self)
+
+        ga = GeneticAlgorithm(self.label, self.device, self.vae, self.classifier, self.imgs_to_sample)
         ga.prepare_data_loader()
-        ga.run_genetic_algorithm()
+        results = ga.run_genetic_algorithm()
+
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        run_folder = f'run_{timestamp}'
+        os.makedirs(run_folder)
+        ga.save_results(results, run_folder)
+
+        results_folder = "Bound_images_results"
+        os.makedirs(results_folder, exist_ok=True)
+        shutil.move(run_folder, os.path.join(results_folder, run_folder))
 
 if __name__ == "__main__":
     competition = CompetitionInterface('Config.txt')
     if competition.mode == '1':
-        competition.run()
+        competition.run_classifier_tester()
     elif competition.mode == '2':
-        competition.run2()
+        competition.run_bound_images_generator()
     else:
         print('Error choosing mode')
