@@ -31,7 +31,7 @@ class VisualizzatoreGrafico:
         plot_barh(axes[1, 2], prediction_with_noise[0], max(prediction_with_noise[0]) * 100, 'Sicurezza della predizione (con rumore)')
 
         plt.tight_layout()
-
+        
         return fig
 
 if __name__ == "__main__":

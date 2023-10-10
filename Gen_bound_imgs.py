@@ -2,42 +2,26 @@
 # coding: utf-8
 
 import os
-import shutil
-from datetime import datetime
-
 import numpy as np
 import torch
-import torchvision
-from torch.utils.data import Subset
-from torchvision import transforms
 from tqdm import trange
+from torch.distributions.binomial import Binomial
+from Classifiers import TensorflowClassifier
 
 
 class GeneticAlgorithm:
-    def __init__(self, label, device, vae, classifier, imgs_to_sample):
+    def __init__(self, label, device, vae, classifier, test_data_loader, imgs_to_sample):
         self.label = label
         self.vae = vae
         self.classifier = classifier
         self.imgs_to_sample = imgs_to_sample
         self.device = device
+        self.test_data_loader = test_data_loader
         self.img_size = 28 * 28 * 1
         self.gen_num = 500
         self.pop_size = 50
         self.best_left = 20
         self.mut_size = 0.1
-
-    def prepare_data_loader(self):
-        test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(),
-                                                   download=True)
-
-        if self.label != -1:
-            idx = test_dataset.targets == self.label
-            idx = np.where(idx)[0]
-            subset = Subset(test_dataset, idx)
-            self.test_data_loader = torch.utils.data.DataLoader(dataset=subset, batch_size=1, shuffle=True)
-        else:
-            self.test_data_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
-        print("Data loader ready...")
 
     def run_genetic_algorithm(self):
         all_img_lst = []

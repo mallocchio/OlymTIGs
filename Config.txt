@@ -1,6 +1,6 @@
-mode: 2
+mode: 1
 model_path: ./Models/model.h5
 vae_model_path: ./Models/MNIST_EnD.pth
 label: 5
-images_type: MNIST
-num_images: 3
+imgs_to_sample: 5
+results_path: ./Results

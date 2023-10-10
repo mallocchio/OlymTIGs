@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from Classifier import TensorflowClassifier
+from Classifiers import TensorflowClassifier
 
 class PyTorchClassifier(nn.Module):
     def __init__(self, num_classes=10):
