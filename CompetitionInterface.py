@@ -1,19 +1,14 @@
-import os
-import shutil
-import time
-import numpy as np
-from Classifiers import TensorflowClassifier, TorchClassifier, VAE
-from GraphGenerator import VisualizzatoreGrafico
-from ImageGenerator import ImageGenerator
-from Gen_bound_imgs import GeneticAlgorithm
-from Gen_classifier_test import ClassifierTester
-from Converter import ModelConverter
-from FolderManager import FolderManager
+from Classifiers import TF_LeNet1, VAE, convert_tf_to_torch, Torch_LeNet1
+from Gen_dataset import prepare_dlfuzz_dataset, prepare_sinvad_dataset, prepare_test_dataset
+from Gen_bound_imgs import run_sinvad
+from Gen_classifier_test import run_tester
+from Gen_metis import run_dlfuzz
+from FolderManager import *
 import torch
+from tensorflow.keras.layers import Input
 
 class CompetitionInterface:
     def __init__(self, config_file):
-        self.image_generator = ImageGenerator()
         self.config_file = config_file
         self.load_config()
 
@@ -34,77 +29,77 @@ class CompetitionInterface:
                 self.model_path = value
             elif key == 'results_path':
                 self.results_path = value
-                self.folder_manager = FolderManager(self.results_path)
             elif key == 'imgs_to_sample':
                 self.imgs_to_sample = int(value)
 
-    def load_models(self):
-        if self.model_path.endswith('.h5'):
-            # Carica il classificatore TensorFlow
-            self.classifier = TensorflowClassifier() 
-            self.classifier.load_model(self.model_path)
-        elif self.model_path.endswith('.pt'):
-            # Carica il classificatore PyTorch
-            self.classifier = TorchClassifier()
-            self.classifier.load_model(self.model_path)
-        else:
-            raise ValueError('Model format not supported')
-
-        print('Classifier initialized...')
-        print('Model loaded...\n')
-
-    def run_classifier_tester(self):
+    def train():
             
-        self.dataset = self.image_generator.prepare_raw_data_loader(self.imgs_to_sample)
-        self.transformed_dataset = self.image_generator.tranform_data_loader(self.dataset)
+        TF_LeNet1(train=True)
+        convert_tf_to_torch()
 
-        output_folder = self.folder_manager.create_folder()
+    def run_test(self):
 
-        self.load_models()
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        torch_lenet1 = Torch_LeNet1()
+        torch_lenet1.load_state_dict(torch.load(self.model_path))
+        torch_lenet1.eval()
+        torch_lenet1.to(device)
 
-        ct = ClassifierTester(self.classifier, self.dataset, self.transformed_dataset, self.imgs_to_sample, output_folder)
-        ct.run_tester()
+        dataset = prepare_test_dataset(self.imgs_to_sample)
 
-    def run_bound_images_generator(self):
+        output_folder = create_folder(self.results_path, "test_run")
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.vae = VAE(img_size=28 * 28, h_dim=1600, z_dim=400)
-        self.vae.load_state_dict(torch.load(self.vae_model_path, map_location=self.device))
-        self.vae.to(self.device)
+        run_tester(torch_lenet1, dataset, self.imgs_to_sample, output_folder)
 
-        if self.model_path.endswith('.h5'):
-            print('Converting tensorflow classifier to torch...\n')
-            percorso_originale = self.model_path
-            nuovo_nome_file = "converted_model.pt"
-            directory = os.path.dirname(percorso_originale)
-            nuovo_percorso = os.path.join(directory, nuovo_nome_file)
 
-            converter = ModelConverter(self.model_path, nuovo_percorso)
-            tensorflow_classifier = converter.load_tensorflow_model()
-            torch_classifier = converter.convert_to_pytorch(tensorflow_classifier)
-            converter.save_pytorch_model(torch_classifier)
-            self.model_path = nuovo_percorso
-            print('Conversion ended successfully...\n')
+    def run_gen(self):
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        ######CARICO IL VAE######
+        vae = VAE(img_size=28 * 28, h_dim=1600, z_dim=400)
+        vae.load_state_dict(torch.load(self.vae_model_path, map_location=device))
+        vae.to(device)
+
+        
+        ######CARICO I MODELLI######
+        torch_lenet1 = Torch_LeNet1()
+        torch_lenet1.load_state_dict(torch.load(self.model_path))
+        torch_lenet1.eval()
+        torch_lenet1.to(device)
+        print("model loaded...")
+
+        
+        img_rows, img_cols = 28, 28
+        input_shape = (img_rows, img_cols, 1)
+        input_tensor = Input(shape=input_shape)
+        tf_lenet1 = TF_LeNet1(input_tensor=input_tensor)
                 
+        ######CARICO I DATASET######
+        sinvad_dataset = prepare_sinvad_dataset(self.label)
 
-        #carico i modelli
-        self.load_models()
+        dlfuzz_dataset = prepare_dlfuzz_dataset(self.label)
 
-        # carico il dataset
-        self.test_data_loader = ImageGenerator.prepare_tensor_data_loader(self, self.label)
+    
+        sinvad_run_folder = create_folder(self.results_path, "sinvad_run")
 
-        ga = GeneticAlgorithm(self.label, self.device, self.vae, self.classifier, self.test_data_loader, self.imgs_to_sample)
+        dlfuzz_run_folder = create_folder(self.results_path, "dlfuzz_run")
 
-        results = ga.run_genetic_algorithm()
+        ######FACCIO PARTIRE GLI ALGORITMI######
+        run_sinvad(self.label, device, vae, torch_lenet1, sinvad_dataset, self.imgs_to_sample, sinvad_run_folder)
+        run_dlfuzz(self.label, tf_lenet1, input_tensor, dlfuzz_dataset, self.imgs_to_sample, dlfuzz_run_folder)
 
-        output_folder = self.folder_manager.create_folder()
-        ga.save_results(results, output_folder)
 
 if __name__ == "__main__":
     competition = CompetitionInterface('Config.txt')
-    if competition.mode == '1':
-        competition.run_classifier_tester()
-    elif competition.mode == '2':
-        competition.run_bound_images_generator()
+    
+    if competition.mode == 'train':
+        competition.train()
+    elif competition.mode == 'run':
+        competition.run_gen()
+    elif competition.mode == 'test':
+        competition.run_test()
     else:
         print('Error choosing mode')
+    
+    #competition.run_metis()

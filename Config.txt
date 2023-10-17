@@ -1,5 +1,5 @@
-mode: 1
-model_path: ./Models/model.h5
+mode: test
+model_path: ./Models/lenet1.pt
 vae_model_path: ./Models/MNIST_EnD.pth
 label: 5
 imgs_to_sample: 5

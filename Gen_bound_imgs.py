@@ -1,98 +1,107 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# funziona solamente con classificatori torch
+
 import os
 import numpy as np
 import torch
 from tqdm import trange
 from torch.distributions.binomial import Binomial
-from Classifiers import TensorflowClassifier
+import time
 
+def run_sinvad(label, device, vae, classifier, test_data_loader, imgs_to_sample, run_folder):
 
-class GeneticAlgorithm:
-    def __init__(self, label, device, vae, classifier, test_data_loader, imgs_to_sample):
-        self.label = label
-        self.vae = vae
-        self.classifier = classifier
-        self.imgs_to_sample = imgs_to_sample
-        self.device = device
-        self.test_data_loader = test_data_loader
-        self.img_size = 28 * 28 * 1
-        self.gen_num = 500
-        self.pop_size = 50
-        self.best_left = 20
-        self.mut_size = 0.1
+    ### GA Params ###
+    img_size = 28*28*1
+    gen_num = 500
+    pop_size = 50
+    best_left = 20
+    mut_size = 0.1
+    imgs_to_samp = imgs_to_sample
 
-    def run_genetic_algorithm(self):
+    with torch.no_grad(): # since nothing is trained here
+
+        start_time = time.time()
+
         all_img_lst = []
-
-        for img_idx in trange(self.imgs_to_sample):
-            for i, (x, x_class) in enumerate(self.test_data_loader):
+        ### multi-image sample loop ###
+        for img_idx in trange(imgs_to_samp):
+            ### Sample image ###
+            for i, (x, x_class) in enumerate(test_data_loader):
                 samp_img = x[0:1]
                 samp_class = x_class[0].item()
+                #all_logits = classifier(samp_img)
 
-            img_enc, _ = self.vae.encode(samp_img.view(-1, self.img_size).to(self.device))
+            #for i, (x) in enumerate(test_data):
+                #samp_img = x
+                #samp_class = label
 
-            init_pop = [img_enc + 0.7 * torch.randn(1, 400).to(self.device) for _ in range(self.pop_size)]
+            img_enc, _ = vae.encode(samp_img.view(-1, img_size).to(device))
+
+            ### Initialize optimization ###
+            init_pop = [img_enc + 0.7 * torch.randn(1, 400).to(device) for _ in range(pop_size)]
             now_pop = init_pop
             prev_best = 999
-            binom_sampler = torch.distributions.binomial.Binomial(probs=0.5 * torch.ones(img_enc.size()))
+            binom_sampler = torch.distributions.binomial.Binomial(probs=0.5*torch.ones(img_enc.size()))
 
-            for g_idx in range(self.gen_num):
+            ### GA ###
+            for g_idx in range(gen_num):
                 indivs = torch.cat(now_pop, dim=0)
-                dec_imgs = self.vae.decode(indivs).view(-1, 1, 28, 28)
-                all_logits = self.classifier.get_batch_prediction(dec_imgs)
+                dec_imgs = vae.decode(indivs).view(-1, 1, 28, 28)
+                all_logits = classifier(dec_imgs)
+
+                #test = [torch.argmax(all_logits[i]) for i in range(pop_size)]
 
                 indv_score = [999 if samp_class == torch.argmax(all_logits[i_idx]).item()
-                              else torch.sum(torch.abs(indivs[i_idx] - img_enc))
-                              for i_idx in range(self.pop_size)]
+                # indv_score = [999 if all_logits[(i_idx, samp_class)] == max(all_logits[i_idx])
+                            else torch.sum(torch.abs(indivs[i_idx] - img_enc))
+                            for i_idx in range(pop_size)]
 
-                best_idxs = sorted(range(len(indv_score)), key=lambda i: indv_score[i], reverse=True)[-self.best_left:]
+                best_idxs = sorted(range(len(indv_score)), key=lambda i: indv_score[i], reverse=True)[-best_left:]
                 now_best = min(indv_score)
 
                 if now_best == prev_best:
-                    self.mut_size *= 0.7
+                    mut_size *= 0.7
                 else:
-                    self.mut_size = 0.1
+                    mut_size = 0.1
                 parent_pop = [now_pop[idx] for idx in best_idxs]
 
                 k_pop = []
-                for k_idx in range(self.pop_size - self.best_left):
-                    mom_idx, pop_idx = np.random.choice(self.best_left, size=2, replace=False)
+                for k_idx in range(pop_size-best_left):
+                    mom_idx, pop_idx = np.random.choice(best_left, size=2, replace=False)
                     spl_idx = np.random.choice(400, size=1)[0]
-                    k_gene = torch.cat([parent_pop[mom_idx][:, :spl_idx], parent_pop[pop_idx][:, spl_idx:]], dim=1)
+                    k_gene = torch.cat([parent_pop[mom_idx][:, :spl_idx], parent_pop[pop_idx][:, spl_idx:]], dim=1) # crossover
 
+                    # mutation
                     diffs = (k_gene != img_enc).float()
-                    k_gene += self.mut_size * torch.randn(k_gene.size()).to(self.device) * diffs
-                    interp_mask = binom_sampler.sample().to(self.device)
+                    k_gene += mut_size * torch.randn(k_gene.size()).to(device) * diffs # random adding noise only to diff places
+                    # random matching to img_enc
+                    interp_mask = binom_sampler.sample().to(device)
                     k_gene = interp_mask * img_enc + (1 - interp_mask) * k_gene
 
                     k_pop.append(k_gene)
                 now_pop = parent_pop + k_pop
                 prev_best = now_best
-                if self.mut_size < 1e-3:
-                    break
+                if mut_size < 1e-3:
+                    break # that's enough and optim is slower than I expected
 
             mod_best = parent_pop[-1].clone()
-            final_bound_img = self.vae.decode(parent_pop[-1])
+            final_bound_img = vae.decode(parent_pop[-1])
             final_bound_img = final_bound_img.detach().cpu().numpy()
             all_img_lst.append(final_bound_img)
 
         all_imgs = np.vstack(all_img_lst)
 
-        return all_imgs
+        end_time = time.time()
 
-    def save_results(self, all_imgs, run_folder):
-        np.save(os.path.join(run_folder, f'bound_imgs_MNIST_{self.label}.npy'), all_imgs)
+        np.save(os.path.join(run_folder, f'bound_imgs_MNIST_{label}.npy'), all_imgs)
 
+        summary_file = os.path.join(run_folder, "summary.txt")
 
-if __name__ == "__main__":
-    label = -1
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    vae_model_path = "vae_model.pt"
-    classifier_model_path = "classifier_model.h5"
+        with open(summary_file, 'w') as f:
+            f.write(f"Classifier used: {classifier}\n")
+            f.write(f"Images used: MNIST dataset\n")
+            f.write(f"Images evaluated: {imgs_to_sample}\n")
+            f.write(f"Evaluation time: {end_time - start_time}\n")
 
-    ga = GeneticAlgorithm(label, device, vae_model_path, classifier_model_path)
-    ga.load_models()
-    ga.prepare_data_loader()
-    ga.run_genetic_algorithm()
