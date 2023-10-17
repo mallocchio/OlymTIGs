@@ -25,11 +25,11 @@ def crea_grafico(image, prediction, image_with_noise, prediction_with_noise):
 
     plot_image(axes[0, 0], image, prediction[2], 'Immagine senza rumore')
     plot_barh(axes[0, 1], prediction[1], max(prediction[1]), 'Grafico dei logit')
-    plot_barh(axes[0, 2], prediction[0], max(prediction[0]) * 100, 'Grafico delle predizioni')
+    plot_barh(axes[0, 2], prediction[0], max(prediction[0]), 'Grafico delle predizioni')
 
     plot_image(axes[1, 0], image_with_noise, prediction_with_noise[2], 'Immagine con rumore')
     plot_barh(axes[1, 1], prediction_with_noise[1], max(prediction_with_noise[1]), 'Logit più elevato (con rumore)')
-    plot_barh(axes[1, 2], prediction_with_noise[0], max(prediction_with_noise[0]) * 100, 'Sicurezza della predizione (con rumore)')
+    plot_barh(axes[1, 2], prediction_with_noise[0], max(prediction_with_noise[0]), 'Sicurezza della predizione (con rumore)')
 
     plt.tight_layout()
     

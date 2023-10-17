@@ -5,7 +5,7 @@ import traceback
 from Gen_dataset import tranform_image
 from Gen_graph import crea_grafico
 from Gen_dataset import *
-from Torch_utils import *
+from Utils_test import *
 
 def run_tester(classifier, dataset, imgs_to_sample, output_folder):
 
@@ -13,6 +13,8 @@ def run_tester(classifier, dataset, imgs_to_sample, output_folder):
     correct_count_with_noise = 0
 
     print('Start evaluating...\n')
+
+    start_time = time.time()
 
     dataiter = iter(dataset)
 
@@ -27,6 +29,8 @@ def run_tester(classifier, dataset, imgs_to_sample, output_folder):
 
             prediction = predict(classifier, images)
 
+            print(prediction[0])
+
             if prediction[2] == labels:
                 correct_count += 1
 
@@ -34,6 +38,8 @@ def run_tester(classifier, dataset, imgs_to_sample, output_folder):
             modified_images = tranform_image(images)
 
             prediction_with_noise = predict(classifier, modified_images)
+
+            print(prediction_with_noise[0])
 
             if prediction_with_noise[2] == labels:
                 correct_count_with_noise += 1
@@ -52,6 +58,8 @@ def run_tester(classifier, dataset, imgs_to_sample, output_folder):
 
     print('Evaluation ended...\n')
 
+    end_time = time.time()
+
     accuracy = correct_count / imgs_to_sample
     accuracy_with_noise = correct_count_with_noise / imgs_to_sample
 
@@ -61,5 +69,6 @@ def run_tester(classifier, dataset, imgs_to_sample, output_folder):
         f.write(f"Classifier used: {classifier}\n")
         f.write(f"Images used: MNIST dataset\n")
         f.write(f"Images evaluated: {imgs_to_sample}\n")
+        f.write(f"Evaluation time: {end_time - start_time}\n")
         f.write(f"Accuracy of predictions without noise: {accuracy:.2%}\n")
         f.write(f"Accuracy of predictions with noise: {accuracy_with_noise:.2%}\n")
