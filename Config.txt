@@ -1,6 +1,7 @@
-mode: test
-model_path: ./Models/lenet1.pt
-vae_model_path: ./Models/MNIST_EnD.pth
+mode: dlfuzz
+model_name: lenet1
+model_path: ./trained/lenet1.keras
+vae_model_path: ./trained/MNIST_EnD.pth
 label: 5
 imgs_to_sample: 5
-results_path: ./Results
+results_path: ./results
