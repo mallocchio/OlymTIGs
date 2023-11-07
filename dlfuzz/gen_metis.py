@@ -2,7 +2,6 @@ import h5py
 import tensorflow as tf
 
 from dlfuzz.utils_gen_metis import *
-import sys
 import os
 import time
 
@@ -22,9 +21,7 @@ def reshape(v):
     return v
 
 
-def run_dlfuzz(label, model, input_tensor, starting_seeds, imgs_to_sample, run_folder):
-
-    img_paths = starting_seeds
+def run_dlfuzz(model_name, label, model, input_tensor, starting_seeds, imgs_to_sample, run_folder):
 
     time1 = time.time()
 
@@ -55,11 +52,9 @@ def run_dlfuzz(label, model, input_tensor, starting_seeds, imgs_to_sample, run_f
 
     total_perturb_adversial = 0
 
-    img_paths = starting_seeds
-
     i = 0
     SEEDCOUNT = 0
-    while SEEDCOUNT < len(img_paths) and adversial_num < imgs_to_sample:
+    while SEEDCOUNT < len(starting_seeds) and adversial_num < imgs_to_sample:
         start_time = time.time()
 
         img_list = []
@@ -88,8 +83,6 @@ def run_dlfuzz(label, model, input_tensor, starting_seeds, imgs_to_sample, run_f
             pred1 = model.predict(gen_img)
             label1 = np.argmax(pred1[0])
             if label1 != label:
-                print(label1)
-                print(label)
                 continue
 
             label_top5 = np.argsort(pred1[0])[-5:]
@@ -198,11 +191,13 @@ def run_dlfuzz(label, model, input_tensor, starting_seeds, imgs_to_sample, run_f
     summary_file = os.path.join(run_folder, "summary.txt")
 
     with open(summary_file, 'w') as f:
-        f.write(f"Classifier used: {model.name}\n")
-        f.write(f"Images used: MNIST dataset\n")
+        f.write(f"----GENERATION----\n")
+        f.write(f"Model: {model_name}\n")
+        f.write(f"Dataset: MNIST\n")
         f.write(f"Images evaluated: {imgs_to_sample}\n")
-        f.write(f"Total time: {total_time}\n")
+        f.write(f"Generation time: {total_time}\n")
         f.write(f"Adversial num: {adversial_num}\n")
         if adversial_num != 0:
             f.write(f"Avarage norm: {total_norm / adversial_num}\n")
-            f.write(f"Average perb adversial: {adversial_num}\n")
+            f.write(f"Average perb adversial: {total_perturb_adversial / adversial_num}\n")
+        f.write(f"\n")

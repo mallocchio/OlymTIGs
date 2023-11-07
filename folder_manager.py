@@ -2,7 +2,6 @@ import os
 import shutil
 from datetime import datetime
 
-
 def create_folder(base_directory, name):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     folder_name = f'{name}_{timestamp}'

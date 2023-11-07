@@ -10,10 +10,10 @@ from tqdm import trange
 from torch.distributions.binomial import Binomial
 import time
 
-def run_sinvad(label, device, vae, classifier, test_data_loader, imgs_to_sample, run_folder):
+def run_sinvad(model_name, label, device, vae, classifier, test_data_loader, img_rows, img_cols, imgs_to_sample, run_folder):
 
     ### GA Params ###
-    img_size = 28*28*1
+    img_size = img_rows * img_cols * 1
     gen_num = 500
     pop_size = 50
     best_left = 20
@@ -44,7 +44,7 @@ def run_sinvad(label, device, vae, classifier, test_data_loader, imgs_to_sample,
             ### GA ###
             for g_idx in range(gen_num):
                 indivs = torch.cat(now_pop, dim=0)
-                dec_imgs = vae.decode(indivs).view(-1, 1, 28, 28)
+                dec_imgs = vae.decode(indivs).view(-1, 1, img_rows, img_cols)
                 all_logits = classifier(dec_imgs)
 
                 #test = [torch.argmax(all_logits[i]) for i in range(pop_size)]
@@ -87,7 +87,7 @@ def run_sinvad(label, device, vae, classifier, test_data_loader, imgs_to_sample,
             final_bound_img = final_bound_img.detach().cpu().numpy()
 
             save_img = os.path.join(run_folder, f"image_{count}_label_{label}.npy")
-            final_bound_img.reshape((1, 28, 28, 1))
+            final_bound_img.reshape((1, img_rows, img_cols, 1))
             np.save(save_img, final_bound_img)
 
             count = count + 1
@@ -102,8 +102,10 @@ def run_sinvad(label, device, vae, classifier, test_data_loader, imgs_to_sample,
         summary_file = os.path.join(run_folder, "summary.txt")
 
         with open(summary_file, 'w') as f:
-            f.write(f"Classifier used: {classifier}\n")
-            f.write(f"Images used: MNIST dataset\n")
-            f.write(f"Images evaluated: {imgs_to_sample}\n")
-            f.write(f"Evaluation time: {end_time - start_time}\n")
+            f.write(f"----GENERATION----\n")
+            f.write(f"Model: {model_name}\n")
+            f.write(f"Dataset: MNIST\n")
+            f.write(f"Images generated: {imgs_to_sample}\n")
+            f.write(f"Generation time: {end_time - start_time}\n")
+            f.write(f"\n")
 

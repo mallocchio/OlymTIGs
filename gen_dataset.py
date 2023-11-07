@@ -11,9 +11,9 @@ import random
 '''UNIFICARE I 3 DATASET CREATOR IN MODO CHE CE NE SIA UNO SOLO CHE POI SCARICA QUELLO GIUSTO IN BASE AL MODELLO'''
 '''DEVO IMPOSTARE LO STESSO MODO PER TUTTI, PER ESEMPIO ADESSO SINVAD USA UN DATASET MENTRE DLFUZZ UTILIZZA UN'ARRAY'''
 
-def prepare_dataset(label, mode):
+def prepare_dataset(label, TIG):
 
-    if mode == 'sinvad':
+    if TIG == 'sinvad':
 
         test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(), download=True)
 
@@ -25,12 +25,10 @@ def prepare_dataset(label, mode):
         else:
             test_data_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
 
-        print("Sinvad dataset created...\n")
-
         return test_data_loader
         
 
-    if mode == 'dlfuzz':
+    if TIG == 'dlfuzz':
 
         (_, _), (x_test, y_test) = mnist.load_data()
 
@@ -43,16 +41,3 @@ def prepare_dataset(label, mode):
         random.shuffle(dataset)
 
         return dataset
-
-    if mode == "test":
-
-        valset = torchvision.datasets.MNIST(root='./data', train=False, transform=None, download=True)
-
-        data_loader = []
-
-        for i in range(imgs_to_generate):
-            index = np.random.randint(0, len(valset))
-            image, label = valset[index]
-            image = np.array(image)
-            data_loader.append((image, label))
-        return data_loader

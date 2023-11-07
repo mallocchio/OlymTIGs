@@ -1,7 +1,6 @@
 import numpy as np
 from tensorflow.keras import backend as K
 import tensorflow as tf
-import os
 
 from tensorflow.keras.datasets import mnist, fashion_mnist
 
@@ -53,14 +52,12 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
-def reshape(x_test):
+def run_compute_rec_losses(encoder, decoder):
+
+    (_, _), (x_test, y_test) = mnist.load_data()
     x_test = np.reshape(x_test, [-1, image_size, image_size, 1])
     x_test = x_test.astype('float32') / 255
-    return x_test
-
-def run_compute_rec_losses(encoder, decoder, dataset, run_folder):
-
-    data = reshape(dataset)
+    data = x_test
 
     rec_losses = []
 

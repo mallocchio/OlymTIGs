@@ -3,7 +3,7 @@ from scipy.stats import gamma
 import json
 import os
 
-def calc_thresholds(losses, run_folder):
+def calc_thresholds(losses):
     """
     Calculates all thresholds stores them on a file system
     :param losses: array of shape (n,),
@@ -20,14 +20,5 @@ def calc_thresholds(losses, run_folder):
 
     for c in conf_intervals:
         thresholds[str(c)] = gamma.ppf(c, shape, loc=loc, scale=scale)
-
-    as_json = json.dumps(thresholds)
-
-    json_filename = str(run_folder + "/thresholds.json")
-
-    print("Saving thresholds to %s" % json_filename)
-
-    with open(json_filename, 'a') as fp:
-        fp.write(as_json)
 
     return thresholds

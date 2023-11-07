@@ -2,21 +2,57 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Input, Dense, Activation, Flatten
 from tensorflow.keras.models import Model
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.layers import Input
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from tensorflow.keras.layers import Input
 
-def TF_LeNet1(input_tensor=None, train=False, model_path=None):
+def training(model, img_rows, img_cols):
+
+    batch_size = 256
+    nb_epoch = 10
+    nb_classes = 10
+
+    # the data, shuffled and split between train and test sets
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+    input_shape = (img_rows, img_cols, 1)
+
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+
+    # convert class vectors to binary class matrices    
+    y_train = to_categorical(y_train, nb_classes)
+    y_test = to_categorical(y_test, nb_classes)
+
+
+    # compiling
+    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
+
+    # trainig
+    model.fit(x_train, y_train, validation_data=(x_test, y_test), batch_size=batch_size, epochs=nb_epoch, verbose=1)
+    
+    #evaluation
+    score = model.evaluate(x_test, y_test, verbose=0)
+    print('\n')
+    print('Overall Test score:', score[0])
+    print('Overall Test accuracy:', score[1])
+
+    return model
+
+def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=28, img_cols=28):
     nb_classes = 10
     # convolution kernel size
     kernel_size = (5, 5)
 
     if train:
 
-        img_rows, img_cols = 28, 28
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
@@ -43,7 +79,7 @@ def TF_LeNet1(input_tensor=None, train=False, model_path=None):
 
     if train:
         
-        trained_model = training(model)
+        trained_model = training(model, img_rows, img_cols)
         trained_model.save("./trained/lenet1.keras")
         
     else:
@@ -80,14 +116,17 @@ class Torch_LeNet1(nn.Module):
         return out
 
 
-def TF_LeNet4(input_tensor=None, train=False, model_path=None):
+def TF_LeNet4(input_tensor=None, train=False, model_path=None, img_rows=None, img_cols=None):
     nb_classes = 10
     # convolution kernel size
     kernel_size = (5, 5)
 
     if train:
 
-        img_rows, img_cols = 28, 28
+        if img_rows is None or img_cols is None:
+            print('you have to proved img size when training')
+            xit()
+            
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
@@ -116,7 +155,7 @@ def TF_LeNet4(input_tensor=None, train=False, model_path=None):
 
     if train:
         
-        trained_model = training(model)
+        trained_model = training(model, img_rows, img_cols)
         model.save_weights("./trained/lenet4.keras")
         
     else:
@@ -154,14 +193,13 @@ class Torch_LeNet4(nn.Module):
 
 
 
-def TF_LeNet5(input_tensor=None, train=False, model_path=None):
+def TF_LeNet5(input_tensor=None, train=False, model_path=None, img_rows=None, img_cols=None):
     nb_classes = 10
     # convolution kernel size
     kernel_size = (5, 5)
 
     if train:
         
-        img_rows, img_cols = 28, 28
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
@@ -173,7 +211,7 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None):
         exit()
 
     # block1
-    x = Convo2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
+    x = Conv2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
     x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
 
     # block2
@@ -190,7 +228,7 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None):
 
     if train:
        
-       trained_model = training(model)
+       trained_model = training(model, img_rows, img_cols)
        model.save_weights("./trained/lenet5.keras")
 
     else:
@@ -201,7 +239,7 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None):
 class Torch_LeNet5(nn.Module):
     def __init__(self):
         kernel_size = (5, 5)
-        super(Torch_LeNet3, self).__init__()
+        super(Torch_LeNet5, self).__init__()
         # Block 1
         self.conv1 = nn.Conv2d(1, 6, kernel_size=kernel_size, padding=2)
         self.relu1 = nn.ReLU()
@@ -226,3 +264,19 @@ class Torch_LeNet5(nn.Module):
         out = self.fc2(out)
         out = self.out(out)
         return out
+
+
+from tensorflow.keras.datasets import mnist
+def train_model(model_name, img_rows, img_cols):
+    model_constructors = {
+        "lenet1": TF_LeNet1,
+        "lenet4": TF_LeNet4,
+        "lenet5": TF_LeNet5,
+        # per aggiungere un modello inseriscilo qui
+    }
+
+    if model_name not in model_constructors:
+        raise ValueError("Model name not supported")
+
+    model = model_constructors[model_name](train=True, img_rows=img_rows, img_cols=img_cols)
+    convert_tf_to_torch(model, model_name)
