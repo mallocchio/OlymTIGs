@@ -39,12 +39,7 @@ def calculate_density(x_target_orig, enc, dec):
     return reconstructed_prob_x_target
 
 def sampling(args):
-    """Reparameterization trick by sampling from an isotropic unit Gaussian.
-    # Arguments
-        args (tensor): mean and log of variance of Q(z|X)
-    # Returns
-        z (tensor): sampled latent vector
-    """
+
     z_mean, z_log_var = args
     batch = K.shape(z_mean)[0]
     dim = K.int_shape(z_mean)[1]
@@ -53,6 +48,8 @@ def sampling(args):
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
 def run_compute_rec_losses(encoder, decoder):
+
+    DATASET = "MNIST"
 
     (_, _), (x_test, y_test) = mnist.load_data()
     x_test = np.reshape(x_test, [-1, image_size, image_size, 1])
@@ -66,5 +63,5 @@ def run_compute_rec_losses(encoder, decoder):
         rec_loss = calculate_density(batch, encoder, decoder)
         rec_losses.append(rec_loss)
     rec_loss_summary = np.vstack(rec_losses)
-
+    np.save('./selforacle/losses/rec_losses_'+DATASET+'.npy', rec_loss_summary)
     return rec_loss_summary

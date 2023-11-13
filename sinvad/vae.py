@@ -144,11 +144,9 @@ class ConvVAE(nn.Module):
         rec_x = self.decode(z)
         return rec_x, mu, log_var
 
-def load_vae(vae_model_path, img_rows, img_cols, device):
+def load_vae(vae_model_path, img_rows, img_cols, map_location):
     vae = VAE(img_size=img_rows * img_cols, h_dim=1600, z_dim=400)
-    vae.load_state_dict(torch.load(vae_model_path, map_location=device))
-    vae.to(device)
-
+    vae.load_state_dict(torch.load(vae_model_path, map_location=map_location))
     return vae
 
     

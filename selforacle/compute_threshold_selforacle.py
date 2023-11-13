@@ -4,13 +4,6 @@ import json
 import os
 
 def calc_thresholds(losses):
-    """
-    Calculates all thresholds stores them on a file system
-    :param losses: array of shape (n,),
-                    where n is the number of training data points, containing the losses calculated for these points
-    :param model_class: the identifier of the anomaly detector type
-    :return: a dictionary of where key = threshold_identifier and value = threshold_value
-    """
 
     shape, loc, scale = gamma.fit(losses, floc=0)
 
@@ -20,5 +13,12 @@ def calc_thresholds(losses):
 
     for c in conf_intervals:
         thresholds[str(c)] = gamma.ppf(c, shape, loc=loc, scale=scale)
+
+    as_json = json.dumps(thresholds)
+
+    json_filename = str('./selforacle/losses/thresholds_MNIST.json')
+
+    with open(json_filename, 'w') as fp:
+        fp.write(as_json)
 
     return thresholds

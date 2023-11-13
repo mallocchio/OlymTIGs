@@ -130,40 +130,25 @@ class VAE(tf.keras.Model):
 """
 ## Train the VAE
 """
-def train_vae(label):
-
-    CLASS = label
-    #CLASS = 5
+def train_vae():
 
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-
-    #mnist_digits = np.concatenate([x_train, x_test], axis=0)
     mnist_digits = x_train
 
-    vae_name = "trained/mnist_vae_stocco"
-    if CLASS is not None:
-        #mnist_labels = np.concatenate([y_train, y_test], axis=0)
-        mnist_labels = y_train
-        idxs = np.argwhere(mnist_labels == CLASS)
-        mnist_digits = mnist_digits[idxs]
-        vae_name = vae_name + "_" + str(CLASS)
-        BATCH_SIZE = 8
-    else:
-        vae_name = vae_name + "_all_classes"
-        BATCH_SIZE = 128
+    vae_name = "validation_MNIST_vae"
+
+    BATCH_SIZE = 128
 
     mnist_digits = np.expand_dims(mnist_digits, -1).astype("float32") / 255
 
     mnist_digits = tf.reshape(tensor=mnist_digits, shape=(-1, original_dim,))
 
     vae = VAE(encoder, decoder)
-    #optimizer = tf.keras.optimizers.Adam(1e-4)
-    #vae.compile(optimizer=optimizer)
     vae.compile(optimizer="adam")
     vae.fit(mnist_digits, epochs=50, batch_size=BATCH_SIZE)
 
-    vae.encoder.save(vae_name+"/encoder")
-    vae.decoder.save(vae_name+"/decoder")
+    vae.encoder.save("./trained/"+vae_name+"/encoder")
+    vae.decoder.save("./trained/"+vae_name+"/decoder")
 
 
 def load_encoder(encoder_path):

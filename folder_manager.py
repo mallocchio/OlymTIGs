@@ -2,9 +2,9 @@ import os
 import shutil
 from datetime import datetime
 
-def create_folder(base_directory, name):
+def create_folder(TIG, base_directory):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    folder_name = f'{name}_{timestamp}'
+    folder_name = f'{TIG}_{timestamp}'
     folder_path = os.path.join(base_directory, folder_name)
     try:
         os.makedirs(folder_path)

@@ -1,8 +1,8 @@
-import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Input, Dense, Activation, Flatten
 from tensorflow.keras.models import Model
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.layers import Input
+from tensorflow.keras.datasets import mnist
 
 import numpy as np
 import torch
@@ -31,7 +31,6 @@ def training(model, img_rows, img_cols):
     y_train = to_categorical(y_train, nb_classes)
     y_test = to_categorical(y_test, nb_classes)
 
-
     # compiling
     model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
 
@@ -43,7 +42,6 @@ def training(model, img_rows, img_cols):
     print('\n')
     print('Overall Test score:', score[0])
     print('Overall Test accuracy:', score[1])
-
     return model
 
 def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=28, img_cols=28):
@@ -56,13 +54,10 @@ def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=28, img_
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
-    elif input_tensor is None:
-        print('you have to provide input_tensor when testing')
+    elif input_tensor is None or model_path is None:
+        print('you have to provide input_tensor or model_path when testing')
         exit()
-    elif model_path is None:
-        print('you have to provide model_path when testing')
-        exit()
-
+    
     # block1
     x = Conv2D(4, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
     x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
@@ -79,8 +74,8 @@ def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=28, img_
 
     if train:
         
-        trained_model = training(model, img_rows, img_cols)
-        trained_model.save("./trained/lenet1.keras")
+        model = training(model, img_rows, img_cols)
+        model.save("./trained/lenet1.keras")
         
     else:
 
@@ -130,15 +125,11 @@ def TF_LeNet4(input_tensor=None, train=False, model_path=None, img_rows=None, im
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
-    elif input_tensor is None:
-        print('you have to proved input_tensor when testing')
-        exit()
-    elif model_path is None:
-        print('you have to proved model_path when testing')
+    elif input_tensor is None or model_path is None:
+        print('you have to provide input_tensor or model_path when testing')
         exit()
 
     # block1
-    print("in Model2 input_tensor = ",input_tensor)
     x = Conv2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
     x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
 
@@ -155,7 +146,7 @@ def TF_LeNet4(input_tensor=None, train=False, model_path=None, img_rows=None, im
 
     if train:
         
-        trained_model = training(model, img_rows, img_cols)
+        model = training(model, img_rows, img_cols)
         model.save_weights("./trained/lenet4.keras")
         
     else:
@@ -203,11 +194,8 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None, img_rows=None, im
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
 
-    elif input_tensor is None:
-        print('you have to proved input_tensor when testing')
-        exit()
-    elif model_path is None:
-        print('you have to proved model_path when testing')
+    elif input_tensor is None or model_path is None:
+        print('you have to provide input_tensor or model_path when testing')
         exit()
 
     # block1
@@ -228,7 +216,7 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None, img_rows=None, im
 
     if train:
        
-       trained_model = training(model, img_rows, img_cols)
+       model = training(model, img_rows, img_cols)
        model.save_weights("./trained/lenet5.keras")
 
     else:
@@ -264,19 +252,3 @@ class Torch_LeNet5(nn.Module):
         out = self.fc2(out)
         out = self.out(out)
         return out
-
-
-from tensorflow.keras.datasets import mnist
-def train_model(model_name, img_rows, img_cols):
-    model_constructors = {
-        "lenet1": TF_LeNet1,
-        "lenet4": TF_LeNet4,
-        "lenet5": TF_LeNet5,
-        # per aggiungere un modello inseriscilo qui
-    }
-
-    if model_name not in model_constructors:
-        raise ValueError("Model name not supported")
-
-    model = model_constructors[model_name](train=True, img_rows=img_rows, img_cols=img_cols)
-    convert_tf_to_torch(model, model_name)

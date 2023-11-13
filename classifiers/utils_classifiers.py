@@ -1,14 +1,50 @@
-from tensorflow.keras.datasets import mnist
 import torch
 import numpy as np
 from classifiers.classifiers import TF_LeNet1, TF_LeNet4, TF_LeNet5, Torch_LeNet1, Torch_LeNet4, Torch_LeNet5
 
+def load_model(model_name, model_path, img_rows, img_cols):
+    
+    model_constructors = {
+        "lenet1.pt": Torch_LeNet1,
+        "lenet4.pt": Torch_LeNet4,
+        "lenet5.pt": Torch_LeNet5,
+        "lenet1.keras": TF_LeNet1,
+        "lenet4.keras": TF_LeNet4,
+        "lenet5.keras": TF_LeNet5,
+    }
+
+    if model_name not in model_constructors:
+        raise ValueError("Model name not supported")
+
+    if model_name.endswith(".pt"):
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        model = model_constructors[model_name]()
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
+        model.to(device)
+
+        return model
+
+    elif model_name.endswith(".keras"):
+
+        import tensorflow as tf
+        tf.compat.v1.disable_eager_execution()
+        from tensorflow.keras.layers import Input
+
+        input_shape = (img_rows, img_cols, 1)
+        input_tensor = Input(shape=input_shape)
+        
+        model = model_constructors[model_name](input_tensor=input_tensor, model_path=model_path)
+
+        return model, input_tensor
+
 def train_model(model_name, img_rows, img_cols):
+
+    model_name = model_name.split('.')[0]    
     model_constructors = {
         "lenet1": TF_LeNet1,
         "lenet4": TF_LeNet4,
         "lenet5": TF_LeNet5,
-        # per aggiungere un modello inseriscilo qui
     }
 
     if model_name not in model_constructors:
@@ -20,8 +56,8 @@ def train_model(model_name, img_rows, img_cols):
         "lenet1": Torch_LeNet1,
         "lenet4": Torch_LeNet4,
         "lenet5": Torch_LeNet5,
-        # per aggiungere un modello inseriscilo qui
     }
+    
     torch_model = model_converter[model_name]()
     convert_tf_to_torch(tf_model, torch_model, model_name, img_rows, img_cols)
 
@@ -67,7 +103,7 @@ def convert_tf_to_torch(tf_model, torch_model, model_name, img_rows, img_cols):
 
     elif model_name == "lenet4":
 
-        sd['fc1.weight'] = tranlate_outw(tf_weights, 4)
+        sd['fc1.weight'] = translate_outw(tf_weights, 4)
         sd['fc1.bias'] = translate_bias(tf_weights, 5)
 
         sd['out.weight'] = translate_outw(tf_weights, 6)
@@ -85,35 +121,4 @@ def convert_tf_to_torch(tf_model, torch_model, model_name, img_rows, img_cols):
         sd['out.bias'] = translate_bias(tf_weights, 9)
 
     torch.save(sd, "./trained/" + f"{model_name}.pt")
-
-def load_model(model_name, model_path, input_tensor=None, device=None):
-
-    if input_tensor is None:
-        model_constructors = {
-            "lenet1": Torch_LeNet1,
-            "lenet4": Torch_LeNet4,
-            "lenet5": Torch_LeNet5,
-        }
-
-        if model_name not in model_constructors:
-            raise ValueError("Model name not supported")
-
-    
-        model = model_constructors[model_name]()
-        model.load_state_dict(torch.load(model_path))
-        model.eval()
-
-    else:
-        model_constructors = {
-            "lenet1": TF_LeNet1,
-            "lenet4": TF_LeNet4,
-            "lenet5": TF_LeNet5,
-        }
-
-        if model_name not in model_constructors:
-            raise ValueError("Model name not supported")
-        
-        model = model_constructors[model_name](input_tensor=input_tensor, model_path=model_path)
-
-    return model
 

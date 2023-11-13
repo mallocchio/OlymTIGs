@@ -5,7 +5,7 @@ from dlfuzz.utils_gen_metis import *
 import os
 import time
 
-tf.compat.v1.disable_eager_execution()
+#tf.compat.v1.disable_eager_execution()
 
 def _compute_gradients(tensor, var_list):
     grads = tf.gradients(tensor, var_list)
@@ -22,13 +22,10 @@ def reshape(v):
 
 
 def run_dlfuzz(model_name, label, model, input_tensor, starting_seeds, imgs_to_sample, run_folder):
-
-    time1 = time.time()
-
+    
     # load multiple models sharing the same input tensor
     K.set_learning_phase(0)
-
-    # model_layer_dict1 = init_coverage_tables(model)
+    
     model_layer_times1 = init_coverage_times(model)  # times of each neuron covered
     model_layer_times2 = init_coverage_times(model)  # update when new image and adversarial images found
     model_layer_value1 = init_coverage_value(model)
@@ -38,14 +35,12 @@ def run_dlfuzz(model_name, label, model, input_tensor, starting_seeds, imgs_to_s
     neuron_select_strategy = ['1']
     threshold = 0.75
     neuron_to_cover_num = 10
-    subdir = "empstudy"
     iteration_times = 3
 
     neuron_to_cover_weight = 0.5
     predict_weight = 0.5
     learning_step = 0.02
 
-    # start = time.perf_counter()
     total_time = 0
     total_norm = 0
     adversial_num = 0
@@ -55,6 +50,7 @@ def run_dlfuzz(model_name, label, model, input_tensor, starting_seeds, imgs_to_s
     i = 0
     SEEDCOUNT = 0
     while SEEDCOUNT < len(starting_seeds) and adversial_num < imgs_to_sample:
+
         start_time = time.time()
 
         img_list = []

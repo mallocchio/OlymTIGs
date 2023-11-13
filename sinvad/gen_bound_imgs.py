@@ -10,7 +10,7 @@ from tqdm import trange
 from torch.distributions.binomial import Binomial
 import time
 
-def run_sinvad(model_name, label, device, vae, classifier, test_data_loader, img_rows, img_cols, imgs_to_sample, run_folder):
+def run_sinvad(model_name, label, vae, classifier, test_data_loader, img_rows, img_cols, imgs_to_samp, run_folder):
 
     ### GA Params ###
     img_size = img_rows * img_cols * 1
@@ -18,7 +18,8 @@ def run_sinvad(model_name, label, device, vae, classifier, test_data_loader, img
     pop_size = 50
     best_left = 20
     mut_size = 0.1
-    imgs_to_samp = imgs_to_sample
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     count = 1
 
@@ -105,7 +106,7 @@ def run_sinvad(model_name, label, device, vae, classifier, test_data_loader, img
             f.write(f"----GENERATION----\n")
             f.write(f"Model: {model_name}\n")
             f.write(f"Dataset: MNIST\n")
-            f.write(f"Images generated: {imgs_to_sample}\n")
+            f.write(f"Images generated: {imgs_to_samp}\n")
             f.write(f"Generation time: {end_time - start_time}\n")
             f.write(f"\n")
 

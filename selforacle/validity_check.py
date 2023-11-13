@@ -3,6 +3,7 @@ import math
 import csv
 import ntpath
 import os
+import json
 
 import numpy as np
 import random
@@ -15,11 +16,20 @@ from selforacle.compute_threshold_selforacle import calc_thresholds
 
 image_size = 28
 
-def run_validity_check(encoder, decoder, run_folder, label):
+def run_validity_check(encoder, decoder, run_folder):
 
-    rec_losses = run_compute_rec_losses(encoder, decoder, )
+    rec_losses_path = './selforacle/losses/rec_losses_MNIST.npy'
+    thresholds_path = './selforacle/losses/thresholds_MNIST.json'
 
-    thresholds = calc_thresholds(rec_losses)
+    if os.path.exists(rec_losses_path):
+        rec_losses = np.load(rec_losses_path)
+    else:
+        rec_losses = run_compute_rec_losses(encoder, decoder)
+
+    if os.path.exists(thresholds_path):
+        thresholds = json.load(open(thresholds_path))
+    else:
+        thresholds = calc_thresholds(rec_losses)
 
     #VAE density threshold for classifying invalid inputs
 
@@ -27,14 +37,20 @@ def run_validity_check(encoder, decoder, run_folder, label):
     filelist = [f for f in glob.glob(dlf_folder)]
     print("found samples: " + str(len(filelist)))
 
-    with open(run_folder + "/summary.txt", 'a') as f:
-            f.write(f"----VALIDATION----\n")
+    summary_file = os.path.join(run_folder, "summary.txt")
+    if not os.path.exists(summary_file):
+        mode = 'w'
+    else:
+        mode = 'a'
+
+    with open(summary_file, mode) as f:
+        f.write(f"----VALIDATION----\n")
     
     start_time =time.time()
 
     for key, vae_threshold in thresholds.items():
 
-        csv_file = os.path.join(run_folder, "ood_analysis_label_" + str(label) + "_th_" + str(key) + ".csv")
+        csv_file = os.path.join(run_folder, "ood_analysis_th_" + str(key) + ".csv")
 
         with open(csv_file, 'w', encoding='UTF8', newline='') as f:
             writer = csv.writer(f)
@@ -65,13 +81,13 @@ def run_validity_check(encoder, decoder, run_folder, label):
                 sample_name = ntpath.split(sample)[-1]
                 writer.writerow([sample_name, distr, loss])
 
-        with open(run_folder + "/summary.txt", 'a') as f:
+        with open(summary_file, 'a') as f:
             f.write(f"Threshold: {vae_threshold}\n")
             f.write(f"Valid inputs: {valids}\n")
             f.write(f"Invalid inputs: {invalids}\n")
             f.write(f"\n")
 
     end_time = time.time()
-    with open(run_folder + "/summary.txt", 'a') as f:
+    with open(summary_file, 'a') as f:
         f.write(f"Validation time: {end_time - start_time}\n")
             
