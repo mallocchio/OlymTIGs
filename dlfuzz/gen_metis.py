@@ -1,15 +1,13 @@
 import h5py
-import tensorflow as tf
+import tensorflow
 
 from dlfuzz.utils_gen_metis import *
 import os
 import time
 
-#tf.compat.v1.disable_eager_execution()
-
 def _compute_gradients(tensor, var_list):
-    grads = tf.gradients(tensor, var_list)
-    return [grad if grad is not None else tf.zeros_like(var) for var, grad in zip(var_list, grads)]
+    grads = tensorflow.gradients(tensor, var_list)
+    return [grad if grad is not None else tensorflow.zeros_like(var) for var, grad in zip(var_list, grads)]
 
 # Useful function that shapes the input in the format accepted by the ML model.
 def reshape(v):
@@ -19,7 +17,6 @@ def reshape(v):
     v = v.astype('float32')
     v = v / 255.0
     return v
-
 
 def run_dlfuzz(model_name, label, model, input_tensor, starting_seeds, imgs_to_sample, run_folder):
     

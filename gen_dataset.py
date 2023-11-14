@@ -8,22 +8,16 @@ from torch.utils.data import Subset
 from torchvision import transforms
 import random
 
-'''UNIFICARE I 3 DATASET CREATOR IN MODO CHE CE NE SIA UNO SOLO CHE POI SCARICA QUELLO GIUSTO IN BASE AL MODELLO'''
-'''DEVO IMPOSTARE LO STESSO MODO PER TUTTI, PER ESEMPIO ADESSO SINVAD USA UN DATASET MENTRE DLFUZZ UTILIZZA UN'ARRAY'''
-
 def prepare_dataset(label, TIG):
 
     if TIG == 'sinvad':
 
         test_dataset = torchvision.datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(), download=True)
 
-        if label != -1:
-            idx = test_dataset.targets==label
-            idx = np.where(idx)[0]
-            subset = Subset(test_dataset, idx)
-            test_data_loader = torch.utils.data.DataLoader(dataset=subset, batch_size=1, shuffle=True)
-        else:
-            test_data_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
+        idx = test_dataset.targets==label
+        idx = np.where(idx)[0]
+        subset = Subset(test_dataset, idx)
+        test_data_loader = torch.utils.data.DataLoader(dataset=subset, batch_size=1, shuffle=True)
 
         return test_data_loader
         
@@ -32,11 +26,8 @@ def prepare_dataset(label, TIG):
 
         (_, _), (x_test, y_test) = mnist.load_data()
 
-        if label != -1:
-            idxs = np.argwhere(y_test == label)
-            dataset = x_test[idxs]
-        else:
-            dataset = x_test
+        idxs = np.argwhere(y_test == label)
+        dataset = x_test[idxs]
 
         random.shuffle(dataset)
 

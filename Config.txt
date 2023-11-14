@@ -1,18 +1,20 @@
 ----MODE TO USE: GENERATION, VALIDATION----
-mode: generation
+mode: validation
 
 ----GENERATION----
-TIG: dlfuzz
-model_path: ./trained/lenet4.keras
+TIG: sinvad
+model_path: ./trained/lenet1.pt
 
 ----IMAGE SPEC----
 label: 5
-imgs_to_sample: 30
+imgs_to_sample: 100
 img_rows: 28
 img_cols: 28
 
 ----VALIDATION----
 validator: selforacle
-images_folder: ./results/sinvad_2023-11-12_18-41-44
+images_folder: ./results/sinvad_2023-11-13_23-10-16
 
 results_path: ./results
+
+

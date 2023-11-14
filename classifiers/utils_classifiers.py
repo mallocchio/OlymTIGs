@@ -8,9 +8,9 @@ def load_model(model_name, model_path, img_rows, img_cols):
         "lenet1.pt": Torch_LeNet1,
         "lenet4.pt": Torch_LeNet4,
         "lenet5.pt": Torch_LeNet5,
-        "lenet1.keras": TF_LeNet1,
-        "lenet4.keras": TF_LeNet4,
-        "lenet5.keras": TF_LeNet5,
+        "lenet1.h5": TF_LeNet1,
+        "lenet4.h5": TF_LeNet4,
+        "lenet5.h5": TF_LeNet5,
     }
 
     if model_name not in model_constructors:
@@ -25,10 +25,10 @@ def load_model(model_name, model_path, img_rows, img_cols):
 
         return model
 
-    elif model_name.endswith(".keras"):
+    elif model_name.endswith(".h5"):
 
-        import tensorflow as tf
-        tf.compat.v1.disable_eager_execution()
+        import tensorflow
+        tensorflow.compat.v1.disable_eager_execution()
         from tensorflow.keras.layers import Input
 
         input_shape = (img_rows, img_cols, 1)

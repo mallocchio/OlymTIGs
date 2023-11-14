@@ -1,6 +1,8 @@
 import os
 from selforacle.vae_chollet import load_encoder, load_decoder
 from selforacle.validity_check import run_validity_check
+import tensorflow
+tensorflow.compat.v1.enable_eager_execution()
 
 def run_validation(validator, images_folder):
 

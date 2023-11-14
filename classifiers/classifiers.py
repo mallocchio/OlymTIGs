@@ -1,4 +1,4 @@
-from tensorflow.keras.layers import Conv2D, MaxPool2D, Input, Dense, Activation, Flatten
+from tensorflow.keras.layers import Convolution2D, MaxPooling2D, Input, Dense, Activation, Flatten
 from tensorflow.keras.models import Model
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.layers import Input
@@ -9,77 +9,70 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def training(model, img_rows, img_cols):
-
-    batch_size = 256
-    nb_epoch = 10
-    nb_classes = 10
-
-    # the data, shuffled and split between train and test sets
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
-    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
-    input_shape = (img_rows, img_cols, 1)
-
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
-    x_train /= 255
-    x_test /= 255
-
-    # convert class vectors to binary class matrices    
-    y_train = to_categorical(y_train, nb_classes)
-    y_test = to_categorical(y_test, nb_classes)
-
-    # compiling
-    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
-
-    # trainig
-    model.fit(x_train, y_train, validation_data=(x_test, y_test), batch_size=batch_size, epochs=nb_epoch, verbose=1)
-    
-    #evaluation
-    score = model.evaluate(x_test, y_test, verbose=0)
-    print('\n')
-    print('Overall Test score:', score[0])
-    print('Overall Test accuracy:', score[1])
-    return model
-
-def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=28, img_cols=28):
+def TF_LeNet1(input_tensor=None, train=False, model_path=None, img_rows=None, img_cols=None):
     nb_classes = 10
     # convolution kernel size
     kernel_size = (5, 5)
 
     if train:
+        batch_size = 256
+        nb_epoch = 10
 
+        if img_rows is None or img_cols is None:
+            print('you have to proved img size when training')
+            exit()
+
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
         input_shape = (img_rows, img_cols, 1)
-        input_tensor = Input(shape=input_shape)
 
-    elif input_tensor is None or model_path is None:
-        print('you have to provide input_tensor or model_path when testing')
+        x_train = x_train.astype('float32')
+        x_test = x_test.astype('float32')
+        x_train /= 255
+        x_test /= 255
+
+        # convert class vectors to binary class matrices
+        y_train = to_categorical(y_train, nb_classes)
+        y_test = to_categorical(y_test, nb_classes)
+
+        input_tensor = Input(shape=input_shape)
+    elif input_tensor is None:
+        print('you have to proved input_tensor when testing')
         exit()
-    
+
     # block1
-    x = Conv2D(4, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
-    x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
+    # print("in Model1 input_tensor = ",input_tensor)
+    x = Convolution2D(4, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
+    # print("in Model1 x = ", x)
+    x = MaxPooling2D(pool_size=(2, 2), name='block1_pool1')(x)
 
     # block2
-    x = Conv2D(12, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
-    x = MaxPool2D(pool_size=(2, 2), name='block2_pool1')(x)
+    x = Convolution2D(12, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
+    x = MaxPooling2D(pool_size=(2, 2), name='block2_pool1')(x)
 
     x = Flatten(name='flatten')(x)
     x = Dense(nb_classes, name='before_softmax')(x)
     x = Activation('softmax', name='predictions')(x)
 
-    model = Model(inputs=input_tensor, outputs=x)
+    model = Model(input_tensor, x)
 
     if train:
-        
-        model = training(model, img_rows, img_cols)
-        model.save("./trained/lenet1.keras")
-        
-    else:
+        # compiling
+        model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
 
+        # trainig
+        model.fit(x_train, y_train, validation_data=(x_test, y_test), batch_size=batch_size, epochs=nb_epoch, verbose=1)
+        # save model
+        model.save_weights('./trained/lenet1.h5')
+        score = model.evaluate(x_test, y_test, verbose=0)
+        print('\n')
+        print('Overall Test score:', score[0])
+        print('Overall Test accuracy:', score[1])
+    else:
         model.load_weights(model_path)
+    # K.clear_session()
 
     return model
 
@@ -117,25 +110,42 @@ def TF_LeNet4(input_tensor=None, train=False, model_path=None, img_rows=None, im
     kernel_size = (5, 5)
 
     if train:
+        batch_size = 256
+        nb_epoch = 10
 
         if img_rows is None or img_cols is None:
             print('you have to proved img size when training')
-            xit()
-            
-        input_shape = (img_rows, img_cols, 1)
-        input_tensor = Input(shape=input_shape)
+            exit()
 
-    elif input_tensor is None or model_path is None:
-        print('you have to provide input_tensor or model_path when testing')
+        # the data, shuffled and split between train and test sets
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+        input_shape = (img_rows, img_cols, 1)
+
+        x_train = x_train.astype('float32')
+        x_test = x_test.astype('float32')
+        x_train /= 255
+        x_test /= 255
+
+        # convert class vectors to binary class matrices
+        y_train = to_categorical(y_train, nb_classes)
+        y_test = to_categorical(y_test, nb_classes)
+
+        input_tensor = Input(shape=input_shape)
+    elif input_tensor is None:
+        print('you have to proved input_tensor when testing')
         exit()
 
     # block1
-    x = Conv2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
-    x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
+    print("in Model2 input_tensor = ",input_tensor)
+    x = Convolution2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
+    x = MaxPooling2D(pool_size=(2, 2), name='block1_pool1')(x)
 
     # block2
-    x = Conv2D(16, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
-    x = MaxPool2D(pool_size=(2, 2), name='block2_pool1')(x)
+    x = Convolution2D(16, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
+    x = MaxPooling2D(pool_size=(2, 2), name='block2_pool1')(x)
 
     x = Flatten(name='flatten')(x)
     x = Dense(84, activation='relu', name='fc1')(x)
@@ -145,12 +155,18 @@ def TF_LeNet4(input_tensor=None, train=False, model_path=None, img_rows=None, im
     model = Model(input_tensor, x)
 
     if train:
-        
-        model = training(model, img_rows, img_cols)
-        model.save_weights("./trained/lenet4.keras")
-        
-    else:
+        # compiling
+        model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
 
+        # trainig
+        model.fit(x_train, y_train, validation_data=(x_test, y_test), batch_size=batch_size, epochs=nb_epoch, verbose=1)
+        # save model
+        model.save_weights('./trained/lenet4.h5')
+        score = model.evaluate(x_test, y_test, verbose=0)
+        print('\n')
+        print('Overall Test score:', score[0])
+        print('Overall Test accuracy:', score[1])
+    else:
         model.load_weights(model_path)
 
     return model
@@ -182,29 +198,47 @@ class Torch_LeNet4(nn.Module):
         out = self.out(out)
         return out
 
-
-
 def TF_LeNet5(input_tensor=None, train=False, model_path=None, img_rows=None, img_cols=None):
     nb_classes = 10
     # convolution kernel size
     kernel_size = (5, 5)
 
     if train:
-        
-        input_shape = (img_rows, img_cols, 1)
-        input_tensor = Input(shape=input_shape)
+        batch_size = 256
+        nb_epoch = 10
 
+        if img_rows is None or img_cols is None:
+            print('you have to proved img size when training')
+            exit()
+
+        # the data, shuffled and split between train and test sets
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+        input_shape = (img_rows, img_cols, 1)
+
+        x_train = x_train.astype('float32')
+        x_test = x_test.astype('float32')
+        x_train /= 255
+        x_test /= 255
+
+        # convert class vectors to binary class matrices
+        y_train = to_categorical(y_train, nb_classes)
+        y_test = to_categorical(y_test, nb_classes)
+
+        input_tensor = Input(shape=input_shape)
     elif input_tensor is None or model_path is None:
         print('you have to provide input_tensor or model_path when testing')
         exit()
 
     # block1
-    x = Conv2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
-    x = MaxPool2D(pool_size=(2, 2), name='block1_pool1')(x)
+    x = Convolution2D(6, kernel_size, activation='relu', padding='same', name='block1_conv1')(input_tensor)
+    x = MaxPooling2D(pool_size=(2, 2), name='block1_pool1')(x)
 
     # block2
-    x = Conv2D(16, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
-    x = MaxPool2D(pool_size=(2, 2), name='block2_pool1')(x)
+    x = Convolution2D(16, kernel_size, activation='relu', padding='same', name='block2_conv1')(x)
+    x = MaxPooling2D(pool_size=(2, 2), name='block2_pool1')(x)
 
     x = Flatten(name='flatten')(x)
     x = Dense(120, activation='relu', name='fc1')(x)
@@ -215,10 +249,17 @@ def TF_LeNet5(input_tensor=None, train=False, model_path=None, img_rows=None, im
     model = Model(input_tensor, x)
 
     if train:
-       
-       model = training(model, img_rows, img_cols)
-       model.save_weights("./trained/lenet5.keras")
+        # compiling
+        model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
 
+        # trainig
+        model.fit(x_train, y_train, validation_data=(x_test, y_test), batch_size=batch_size, epochs=nb_epoch, verbose=1)
+        # save model
+        model.save_weights('./trained/lenet5.h5')
+        score = model.evaluate(x_test, y_test, verbose=0)
+        print('\n')
+        print('Overall Test score:', score[0])
+        print('Overall Test accuracy:', score[1])
     else:
         model.load_weights(model_path)
 

@@ -117,6 +117,7 @@ def neuron_to_cover(not_covered,model_layer_dict):
         layer_name, index = random.choice(model_layer_dict.keys())
     return layer_name, index
 
+
 def random_strategy(model,model_layer_times, neuron_to_cover_num):
     loss_neuron = []
     not_covered = [(layer_name, index) for (layer_name, index), v in model_layer_times.items() if v == 0]
@@ -130,6 +131,7 @@ def random_strategy(model,model_layer_times, neuron_to_cover_num):
         # loss_neuron += loss1_neuron
         loss_neuron.append(loss00_neuron)
     return loss_neuron
+
 
 def neuron_select_high_weight(model, layer_names, top_k):
     global model_layer_weights_top_k
@@ -195,6 +197,7 @@ def neuron_selection(model, model_layer_times, model_layer_value, neuron_select_
         neurons_covered_times_inverse = np.subtract(max(neurons_covered_times), neurons_covered_times)
         neurons_covered_percentage_inverse = neurons_covered_times_inverse / float(sum(neurons_covered_times_inverse))
         # num_neuron1 = np.random.choice(range(len(neurons_covered_times)), p=neurons_covered_percentage_inverse)
+
         num_neuron1 = np.random.choice(range(len(neurons_covered_times)), int(neuron_to_cover_num_each), replace=False,
                                        p=neurons_covered_percentage_inverse)
         for num in num_neuron1:
@@ -309,10 +312,9 @@ def scale(intermediate_layer_output, rmax=1, rmin=0):
 def update_coverage(input_data, model, model_layer_times, threshold=0):
     layer_names = [layer.name for layer in model.layers if
                    'flatten' not in layer.name and 'input' not in layer.name]
-
     intermediate_layer_model = Model(inputs=model.input,
                                      outputs=[model.get_layer(layer_name).output for layer_name in layer_names])
-                                     
+
     intermediate_layer_outputs = intermediate_layer_model.predict(input_data)
 
     for i, intermediate_layer_output in enumerate(intermediate_layer_outputs):
