@@ -8,11 +8,7 @@ def run_generation(TIG, model_name, model, run_folder, dataset, label, img_rows,
         import torch
 
         vae_model_path = './trained/MNIST_EnD.pth'
-        if torch.cuda.is_available():
-            map_location = None
-        else:
-            map_location = torch.device('cpu')
-        vae = load_vae(vae_model_path, img_rows, img_cols, map_location)
+        vae = load_vae(vae_model_path, img_rows, img_cols)
         run_sinvad(model_name, label, vae, model, dataset, img_rows, img_cols, imgs_to_sample, run_folder)
 
     if TIG == "dlfuzz":

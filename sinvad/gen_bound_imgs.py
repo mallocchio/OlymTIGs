@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 # funziona solamente con classificatori torch
 
 import os
@@ -12,14 +9,14 @@ import time
 
 def run_sinvad(model_name, label, vae, classifier, test_data_loader, img_rows, img_cols, imgs_to_samp, run_folder):
 
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     ### GA Params ###
     img_size = img_rows * img_cols * 1
     gen_num = 500
     pop_size = 50
     best_left = 20
     mut_size = 0.1
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     count = 1
 
@@ -33,6 +30,11 @@ def run_sinvad(model_name, label, vae, classifier, test_data_loader, img_rows, i
             for i, (x, x_class) in enumerate(test_data_loader):
                 samp_img = x[0:1]
                 samp_class = x_class[0].item()
+                #all_logits = classifier(samp_img)
+
+            #for i, (x) in enumerate(test_data):
+                #samp_img = x
+                #samp_class = LABEL
 
             img_enc, _ = vae.encode(samp_img.view(-1, img_size).to(device))
 
@@ -88,11 +90,11 @@ def run_sinvad(model_name, label, vae, classifier, test_data_loader, img_rows, i
             final_bound_img = final_bound_img.detach().cpu().numpy()
 
             save_img = os.path.join(run_folder, f"image_{count}_label_{label}.npy")
-            final_bound_img.reshape((1, img_rows, img_cols, 1))
+            #final_bound_img.reshape((1, img_rows, img_cols, 1))
             np.save(save_img, final_bound_img)
 
             count = count + 1
-            
+                
 
         #all_imgs = np.vstack(all_img_lst)all
 

@@ -13,7 +13,7 @@ img_cols: 28
 
 ----VALIDATION----
 validator: selforacle
-images_folder: ./results/sinvad_2023-11-13_23-10-16
+images_folder: ./results/sinvad_2023-11-18_20-56-47
 
 results_path: ./results
 

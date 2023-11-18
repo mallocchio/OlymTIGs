@@ -144,9 +144,17 @@ class ConvVAE(nn.Module):
         rec_x = self.decode(z)
         return rec_x, mu, log_var
 
-def load_vae(vae_model_path, img_rows, img_cols, map_location):
-    vae = VAE(img_size=img_rows * img_cols, h_dim=1600, z_dim=400)
-    vae.load_state_dict(torch.load(vae_model_path, map_location=map_location))
+def load_vae(vae_model_path, img_rows, img_cols):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    if torch.cuda.is_available():
+        map_location = None
+    else:
+        map_location = torch.device('cpu')
+
+    with torch.no_grad():
+        vae = VAE(img_size=img_rows*img_cols, h_dim=1600, z_dim=400)
+        vae.load_state_dict(torch.load(vae_model_path, map_location=map_location))
+        vae.to(device)
     return vae
 
     

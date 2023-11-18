@@ -17,12 +17,12 @@ def load_model(model_name, model_path, img_rows, img_cols):
         raise ValueError("Model name not supported")
 
     if model_name.endswith(".pt"):
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        model = model_constructors[model_name]()
-        model.load_state_dict(torch.load(model_path))
-        model.eval()
-        model.to(device)
-
+        with torch.no_grad():
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            model = model_constructors[model_name]()
+            model.load_state_dict(torch.load(model_path))
+            model.eval()
+            model.to(device)
         return model
 
     elif model_name.endswith(".h5"):
@@ -33,9 +33,7 @@ def load_model(model_name, model_path, img_rows, img_cols):
 
         input_shape = (img_rows, img_cols, 1)
         input_tensor = Input(shape=input_shape)
-        
         model = model_constructors[model_name](input_tensor=input_tensor, model_path=model_path)
-
         return model, input_tensor
 
 def train_model(model_name, img_rows, img_cols):
