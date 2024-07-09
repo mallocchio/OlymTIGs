@@ -1,6 +1,4 @@
-# Progetto_Tirocinio
-Repository per il progetto di tirocinio
+This repository contains the work for my internship and bachelor's thesis, focusing on:
 
-- Generatore automatizzato di immagini di test tramite SINVAD e DLFuzz
-
-- Validatore automatizzato di immagini avversarie tramite SelfOracle
+- Automated Test Image Generation: Using SINVAD and DLFuzz to generate test images.
+- Adversarial Image Validation: Using SelfOracle to validate adversarial images.
